@@ -1,29 +1,26 @@
+const express = require('express');
 const http = require('http');
-const fs = require('fs');
 const path = require('path');
 const socketIo = require('socket.io');
 
-const server = http.createServer((req, res) => {
-    if (req.url === '/') {
-        const filePath = path.join(__dirname, 'public', 'index.html');
-        fs.readFile(filePath, (err, data) => {
-            if (err) {
-                res.writeHead(500);
-                res.end('Error loading index.html');
-            } else {
-                res.writeHead(200, { 'Content-Type': 'text/html' });
-                res.end(data);
-            }
-        });
-    } else {
-        res.writeHead(404);
-        res.end('Not Found');
-    }
+// Initialize Express
+const app = express();
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = socketIo(server);
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Define a route to serve the index.html file
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const io = socketIo(server);
-const port = 5000;
-
+// Handle socket connections
 io.on('connection', (socket) => {
     console.log('A user connected');
 
@@ -40,6 +37,8 @@ io.on('connection', (socket) => {
     });
 });
 
+// Set the port for the server to listen on
+const port = process.env.PORT || 5000;
 server.listen(port, () => {
     console.log(`Server is listening at the port: ${port}`);
 });
