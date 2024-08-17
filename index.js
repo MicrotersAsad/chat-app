@@ -1,11 +1,12 @@
-//index.js file - Server Side Code
-
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
+const socketIo = require('socket.io');
 
 const server = http.createServer((req, res) => {
     if (req.url === '/') {
-        fs.readFile(__dirname + '/index.html', (err, data) => {
+        const filePath = path.join(__dirname, 'public', 'index.html');
+        fs.readFile(filePath, (err, data) => {
             if (err) {
                 res.writeHead(500);
                 res.end('Error loading index.html');
@@ -14,19 +15,28 @@ const server = http.createServer((req, res) => {
                 res.end(data);
             }
         });
+    } else {
+        res.writeHead(404);
+        res.end('Not Found');
     }
 });
 
-const io = require('socket.io')(server);
+const io = socketIo(server);
 const port = 5000;
 
 io.on('connection', (socket) => {
+    console.log('A user connected');
+
     socket.on('send name', (user) => {
         io.emit('send name', user);
     });
 
     socket.on('send message', (chat) => {
         io.emit('send message', chat);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
     });
 });
 
